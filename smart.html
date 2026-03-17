@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Smart Pump Monitoring</title>
+
+<style>
+
+body{
+background:#1e272e;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+
+.container{
+width:700px;
+margin:auto;
+padding:20px;
+}
+
+.panel{
+background:#2f3640;
+padding:20px;
+border-radius:10px;
+margin-bottom:20px;
+}
+
+.status{
+font-size:22px;
+}
+
+.green{
+color:#2ecc71;
+}
+
+.red{
+color:#e74c3c;
+}
+
+.value{
+font-size:30px;
+font-weight:bold;
+}
+
+button{
+padding:12px 25px;
+font-size:18px;
+border:none;
+border-radius:6px;
+margin:10px;
+cursor:pointer;
+}
+
+.start{
+background:#27ae60;
+color:white;
+}
+
+.stop{
+background:#c0392b;
+color:white;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Smart Pump Monitoring System</h1>
+
+<div class="panel">
+
+<div class="status">
+Motor Status: <span id="motorStatus" class="red">OFF</span>
+</div>
+
+<div class="status">
+Last Fault: <span id="fault">None</span>
+</div>
+
+</div>
+
+<div class="panel">
+
+Flow Rate
+<div class="value" id="flow">0 L/min</div>
+
+Temperature
+<div class="value" id="temp">0 °C</div>
+
+</div>
+
+<div class="panel">
+
+<button class="start" onclick="motorOn()">START PUMP</button>
+<button class="stop" onclick="motorOff()">STOP PUMP</button>
+
+</div>
+
+</div>
+<script>
+
+const espIP = "http://10.136.108.133";
+
+function motorOn(){
+fetch(espIP + "/motor/on");
+}
+
+function motorOff(){
+fetch(espIP + "/motor/off");
+}
+
+async function updateData(){
+
+try{
+
+const response = await fetch(espIP + "/data");
+const data = await response.json();
+
+document.getElementById("flow").innerText = data.flow + " L/min";
+document.getElementById("temp").innerText = data.temp + " °C";
+document.getElementById("fault").innerText = data.fault;
+
+if(data.motor == 1){
+document.getElementById("motorStatus").innerText = "RUNNING";
+document.getElementById("motorStatus").className = "green";
+}
+else{
+document.getElementById("motorStatus").innerText = "STOPPED";
+document.getElementById("motorStatus").className = "red";
+}
+
+}catch(error){
+
+console.log("Error connecting to ESP32:", error);
+
+}
+
+}
+
+setInterval(updateData,2000);
+updateData();
+
+</script>
+
+</body>
+</html>
