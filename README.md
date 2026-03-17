@@ -34,8 +34,11 @@ Displays:
 - Flow rate
 - Temperature
 - Fault reason
-##Link
+  
+## Link
+
 https://manojjadhav2004.github.io/Smart-Pump-Monitoring-IoT/smart.html
+
 ## Author
 
 Manoj Jadhav
