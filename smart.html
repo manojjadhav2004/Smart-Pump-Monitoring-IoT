@@ -4,67 +4,375 @@
 <title>Smart Pump Monitoring</title>
 
 <style>
-
-body{
-background:#1e272e;
-color:white;
-font-family:Arial;
-text-align:center;
+:root {
+  --bg: #0a0f1f;
+  --surface: #17203d;
+  --surface-soft: #1a2a4f;
+  --border: rgba(255,255,255,0.1);
+  --text: #f0f4ff;
+  --text-muted: #a8b4cd;
+  --accent: #5fe0ff;
+  --accent2: #7d5cff;
+  --success: #58d68d;
+  --warning: #f4d03f;
+  --danger: #eb5f77;
 }
 
-.container{
-width:700px;
-margin:auto;
-padding:20px;
+* {
+  box-sizing: border-box;
 }
 
-.panel{
-background:#2f3640;
-padding:20px;
-border-radius:10px;
-margin-bottom:20px;
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: radial-gradient(circle at 20% 20%, #1f375b 0%, var(--bg) 50%), linear-gradient(160deg, #0f1831 0%, #09121e 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px;
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: 140px;
 }
 
-.status{
-font-size:22px;
+.theme-toggle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  color: var(--text);
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.green{
-color:#2ecc71;
+.theme-toggle:hover {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
 }
 
-.red{
-color:#e74c3c;
+.light-theme {
+  --bg: #f3f6ff;
+  --surface: #ffffff;
+  --surface-soft: #f8faff;
+  --border: rgba(0,0,0,0.12);
+  --text: #1f2a40;
+  --text-muted: #5b6a84;
+  --accent: #3d8dff;
+  --accent2: #7d5cff;
+  --success: #2E8C5F;
+  --warning: #cf9e23;
+  --danger: #e15c6e;
 }
 
-.value{
-font-size:30px;
-font-weight:bold;
+.light-theme {
+  color: var(--text);
+  background: radial-gradient(circle at 20% 20%, #dbe9ff 0%, #f3f6ff 50%), linear-gradient(160deg, #f5f8ff 0%, #eaefff 100%);
 }
 
-button{
-padding:12px 25px;
-font-size:18px;
-border:none;
-border-radius:6px;
-margin:10px;
-cursor:pointer;
+.light-theme .container {
+  background: linear-gradient(145deg, #ffffff, #f8fbff);
+  border-color: var(--border);
+  box-shadow: 0 12px 30px rgba(20, 30, 60, 0.1);
 }
 
-.start{
-background:#27ae60;
-color:white;
+.light-theme .panel {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0,0,0,0.08);
 }
 
-.stop{
-background:#c0392b;
-color:white;
+.light-theme .value {
+  color: #1f2a40;
 }
 
+.light-theme .status {
+  color: #2f3e59;
+}
+
+.predict-btn {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(120deg, #9c27b0, #673ab7);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 30px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(156, 39, 176, 0.35);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  width: 300px;
+  max-width: 80vw;
+  display: block;
+  margin: 0 auto;
+}
+
+.predict-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(156, 39, 176, 0.45);
+}
+
+#riskPanel {
+  position: static;
+  z-index: 30;
+  width: auto;
+  text-align: center;
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 92vw;
+  padding: 0 10px;
+  box-sizing: border-box;
+  margin-top: 24px;
+}
+
+#riskResult {
+  margin-top: 0;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+
+
+.container {
+  width: min(100%, 820px);
+  background: linear-gradient(145deg, var(--surface-soft), var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 14px 40px rgba(3, 10, 28, 0.6);
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+h1 {
+  margin: 0;
+  padding: 24px 24px 16px;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.panel {
+  padding: 20px;
+  margin: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(3px);
+}
+
+.status {
+  font-size: clamp(1rem, 1.6vw, 1.4rem);
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.marker {
+  font-weight: 700;
+  margin-left: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.green {
+  color: var(--success);
+}
+
+.red {
+  color: var(--danger);
+}
+
+.value {
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 800;
+  margin: 8px 0 0;
+  color: #fff;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+button {
+  min-width: 180px;
+  padding: 14px 24px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32);
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.24);
+}
+
+.start {
+  color: white;
+  background: linear-gradient(120deg, #2fd5a3, #18a589);
+  display: flex;
+}
+
+.stop {
+  color: white;
+  background: linear-gradient(120deg, #ff5a6c, #dd3f56);
+}
+
+footer {
+  margin-top: -8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  body {
+    align-items: center;
+    justify-content: flex-start;
+    padding: 70px 12px 200px;
+  }
+  .container {
+    border-radius: 18px;
+  }
+  .panel {
+    margin: 10px;
+    padding: 16px;
+  }
+  button {
+    width: 100%;
+    min-width: 0;
+  }
+  #riskPanel {
+    gap: 8px;
+  }
+  h1 {
+    padding: 18px 16px 12px;
+  }
+  .predict-btn {
+    width: min(320px, 92vw);
+    max-width: 92vw;
+  }
+  #riskResult {
+    font-size: 1rem;
+    padding: 0 10px;
+  }
+}
+
+.report-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #5fe0ff, #7d5cff);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.report-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: var(--surface);
+  color: var(--text);
+  padding: 24px;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  color: var(--accent);
+}
+
+.close-btn {
+  float: right;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.close-btn:hover {
+  color: var(--danger);
+}
+
+.light-theme .modal-content {
+  background: #ffffff;
+  color: #1f2a40;
+}
+
+@media (max-width: 640px) {
+  .report-btn {
+    bottom: 10px;
+    right: 10px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+}
 </style>
 </head>
 
-<body>
+<body id="pageBody">
+
+<button class="theme-toggle" id="themeSwitch" onclick="toggleTheme()">🌙 Switch to Light</button>
 
 <div class="container">
 
@@ -94,22 +402,210 @@ Temperature
 
 <div class="panel">
 
+<div class="status">Temperature Shutdown Threshold:
+  <input id="thresholdInput" type="number" min="0" max="200" value="70" style="width:100px; padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.12); margin-left: 8px;" /> °C
+</div>
+
+</div>
+
+
+
+<div class="panel">
+
+<div class="controls">
+
 <button class="start" onclick="motorOn()">START PUMP</button>
 <button class="stop" onclick="motorOff()">STOP PUMP</button>
 
 </div>
 
 </div>
+
+
+
+</div>
+
+
+<button class="report-btn" onclick="showReport()">📊 Motor Report</button>
+<div id="riskPanel">
+  <button class="predict-btn" onclick="predictRisk()">AI PREDICTION</button>
+  <div id="riskResult"></div>
+</div>
+
+<div id="reportModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeReport()">&times;</span>
+    <h2>Motor Running Report</h2>
+    <div id="reportContent"></div>
+  </div>
+</div>
+
 <script>
 
-const espIP = "http://10.136.108.133";
+const espIP = "http://10.151.237.133";
+const body = document.getElementById('pageBody');
+const themeSwitch = document.getElementById('themeSwitch');
+
+function setTheme(theme) {
+  if (theme === 'light') {
+    body.classList.add('light-theme');
+    themeSwitch.innerText = '🌙 Switch to Dark';
+  } else {
+    body.classList.remove('light-theme');
+    themeSwitch.innerText = '☀️ Switch to Light';
+  }
+  localStorage.setItem('pumpTheme', theme);
+}
+
+function toggleTheme() {
+  const nextTheme = body.classList.contains('light-theme') ? 'dark' : 'light';
+  setTheme(nextTheme);
+}
+
+const savedTheme = localStorage.getItem('pumpTheme');
+setTheme(savedTheme === 'light' ? 'light' : 'dark');
+
+let motorStartTime = null;
+let dailyLogs = JSON.parse(localStorage.getItem('motorDailyLogs') || '{}');
 
 function motorOn(){
-fetch(espIP + "/motor/on");
+  fetch(espIP + "/motor/on");
+  motorStartTime = new Date();
 }
 
 function motorOff(){
-fetch(espIP + "/motor/off");
+  fetch(espIP + "/motor/off");
+  if (motorStartTime) {
+    const endTime = new Date();
+    const duration = Math.floor((endTime - motorStartTime) / 1000 / 60); // minutes
+    const date = motorStartTime.toISOString().split('T')[0];
+    if (!dailyLogs[date]) {
+      dailyLogs[date] = { startTime: motorStartTime.toTimeString().split(' ')[0], totalTime: 0, maxTemp: -Infinity, minTemp: Infinity, faults: [] };
+    }
+    dailyLogs[date].totalTime += duration;
+    localStorage.setItem('motorDailyLogs', JSON.stringify(dailyLogs));
+    motorStartTime = null;
+  }
+  document.getElementById("fault").innerText = "Manual stop";
+}
+
+function getThreshold(){
+  const raw = parseFloat(document.getElementById("thresholdInput").value);
+  if (!isFinite(raw) || raw <= 0) {
+    return 70;
+  }
+  return raw;
+}
+
+function predictRisk() {
+  const today = new Date().toISOString().split('T')[0];
+  const log = dailyLogs[today];
+  if (!log) {
+    document.getElementById("riskResult").innerHTML = '<span style="color: #a8b4cd;">No data available for today.</span>';
+    return;
+  }
+
+  // Calculate risk score (0-100)
+  let riskScore = 0;
+  riskScore += log.faults.length * 10; // 10 points per fault
+  if (log.maxTemp > 50) {
+    riskScore += (log.maxTemp - 50) * 0.5; // 0.5 points per degree above 50
+  }
+  riskScore += (log.totalTime / 60) * 0.1; // 0.1 points per hour run
+  riskScore = Math.min(100, Math.max(0, riskScore)); // Cap between 0-100
+
+  let riskMessage = '';
+  if (riskScore > 70) {
+    riskMessage = '<span style="color: #eb5f77;">HIGH RISK - Change your motor as early as possible!</span>';
+  } else {
+    riskMessage = '<span style="color: #58d68d;">LOW RISK - Your motor is fine.</span>';
+  }
+
+  document.getElementById("riskResult").innerHTML = `Risk Score: ${Math.round(riskScore)}/100 - ${riskMessage}`;
+}
+
+function showReport() {
+  const modal = document.getElementById('reportModal');
+  const content = document.getElementById('reportContent');
+  content.innerHTML = generateReport();
+  modal.style.display = 'flex';
+}
+
+function closeReport() {
+  document.getElementById('reportModal').style.display = 'none';
+}
+
+function generateReport() {
+  const now = new Date();
+  const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const today = now.toISOString().split('T')[0];
+
+  let report = '<h3>Day-wise Motor Report</h3>';
+  report += '<label for="daySelect">Select Day: </label>';
+  report += '<select id="daySelect" onchange="updateDayReport()">';
+
+  const days = Object.keys(dailyLogs).filter(date => date.startsWith(currentMonth)).sort().reverse(); // Most recent first
+  if (days.length === 0) {
+    report += '<option value="">No data available</option>';
+  } else {
+    days.forEach(date => {
+      const selected = date === today ? 'selected' : '';
+      report += `<option value="${date}" ${selected}>${date}</option>`;
+    });
+  }
+  report += '</select><br><br>';
+
+  report += '<div id="dayReportContent">' + generateDayReport(today) + '</div>';
+
+  return report;
+}
+
+function updateDayReport() {
+  const selectedDay = document.getElementById('daySelect').value;
+  const content = document.getElementById('dayReportContent');
+  content.innerHTML = generateDayReport(selectedDay);
+}
+
+function generateDayReport(date) {
+  if (!dailyLogs[date]) {
+    return '<p>No data available for this day.</p>';
+  }
+
+  const log = dailyLogs[date];
+  const hours = Math.floor(log.totalTime / 60);
+  const minutes = log.totalTime % 60;
+
+  let report = `<h4>Report for ${date}</h4>`;
+  report += '<ul>';
+  report += `<li><strong>Start Time:</strong> ${log.startTime}</li>`;
+  report += `<li><strong>Total Running Time:</strong> ${hours} hours ${minutes} minutes</li>`;
+  report += `<li><strong>Maximum Temperature:</strong> ${log.maxTemp === -Infinity ? 'N/A' : log.maxTemp + '°C'}</li>`;
+  report += `<li><strong>Minimum Temperature:</strong> ${log.minTemp === Infinity ? 'N/A' : log.minTemp + '°C'}</li>`;
+  report += `<li><strong>Faults Occurred:</strong> ${log.faults.length > 0 ? log.faults.join(', ') : 'None'}</li>`;
+  report += '</ul>';
+
+  // Analysis
+  report += '<h4>Analysis</h4>';
+  report += '<ul>';
+  if (log.totalTime > 0) {
+    report += '<li>Motor was operational on this day.</li>';
+  } else {
+    report += '<li>Motor was not started on this day.</li>';
+  }
+  if (log.maxTemp > 70) {
+    report += '<li>Temperature was high on this day - potential overheating risk.</li>';
+  } else if (log.maxTemp !== -Infinity) {
+    report += '<li>Temperature remained within safe limits.</li>';
+  }
+  if (log.faults.includes('over-temperature')) {
+    report += '<li>Over-temperature fault occurred - motor was automatically shut down.</li>';
+  }
+  if (log.faults.length === 0 && log.totalTime > 0) {
+    report += '<li>No faults reported - operation was smooth.</li>';
+  }
+  report += '</ul>';
+
+  return report;
 }
 
 async function updateData(){
@@ -121,15 +617,83 @@ const data = await response.json();
 
 document.getElementById("flow").innerText = data.flow + " L/min";
 document.getElementById("temp").innerText = data.temp + " °C";
-document.getElementById("fault").innerText = data.fault;
+
+const threshold = getThreshold();
+const targetFaultEl = document.getElementById("fault");
+
+if (typeof data.temp === 'number' && data.temp > threshold) {
+  motorOff();
+  targetFaultEl.innerText = `Temperature exceeded threshold (${threshold}°C). Motor automatically turned off. Fault: over-temperature.`;
+  alert(`WARNING: Motor temperature ${data.temp}°C exceeded threshold ${threshold}°C. Motor has been stopped and fault is raised.`);
+  // Record fault
+  const date = new Date().toISOString().split('T')[0];
+  if (!dailyLogs[date]) {
+    dailyLogs[date] = { startTime: 'N/A', totalTime: 0, maxTemp: -Infinity, minTemp: Infinity, faults: [] };
+  }
+  if (!dailyLogs[date].faults.includes('over-temperature')) {
+    dailyLogs[date].faults.push('over-temperature');
+  }
+  localStorage.setItem('motorDailyLogs', JSON.stringify(dailyLogs));
+} else {
+  targetFaultEl.innerText = data.fault;
+}
+
+// Track temp highs/lows
+const date = new Date().toISOString().split('T')[0];
+if (!dailyLogs[date]) {
+  dailyLogs[date] = { startTime: 'N/A', totalTime: 0, maxTemp: -Infinity, minTemp: Infinity, faults: [] };
+}
+if (typeof data.temp === 'number') {
+  dailyLogs[date].maxTemp = Math.max(dailyLogs[date].maxTemp, data.temp);
+  dailyLogs[date].minTemp = Math.min(dailyLogs[date].minTemp, data.temp);
+}
+localStorage.setItem('motorDailyLogs', JSON.stringify(dailyLogs));
 
 if(data.motor == 1){
-document.getElementById("motorStatus").innerText = "RUNNING";
-document.getElementById("motorStatus").className = "green";
+  document.getElementById("motorStatus").innerText = "RUNNING";
+  document.getElementById("motorStatus").className = "green";
 }
 else{
-document.getElementById("motorStatus").innerText = "STOPPED";
-document.getElementById("motorStatus").className = "red";
+  document.getElementById("motorStatus").innerText = "STOPPED";
+  document.getElementById("motorStatus").className = "red";
+}
+
+}catch(error){
+
+console.log("Error connecting to ESP32:", error);
+
+}
+
+}
+
+async function updateData(){
+
+try{
+
+const response = await fetch(espIP + "/data");
+const data = await response.json();
+
+document.getElementById("flow").innerText = data.flow + " L/min";
+document.getElementById("temp").innerText = data.temp + " °C";
+
+const threshold = getThreshold();
+const targetFaultEl = document.getElementById("fault");
+
+if (typeof data.temp === 'number' && data.temp > threshold) {
+  motorOff();
+  targetFaultEl.innerText = `Temperature exceeded threshold (${threshold}°C). Motor automatically turned off. Fault: over-temperature.`;
+  alert(`WARNING: Motor temperature ${data.temp}°C exceeded threshold ${threshold}°C. Motor has been stopped and fault is raised.`);
+} else {
+  targetFaultEl.innerText = data.fault;
+}
+
+if(data.motor == 1){
+  document.getElementById("motorStatus").innerText = "RUNNING";
+  document.getElementById("motorStatus").className = "green";
+}
+else{
+  document.getElementById("motorStatus").innerText = "STOPPED";
+  document.getElementById("motorStatus").className = "red";
 }
 
 }catch(error){
