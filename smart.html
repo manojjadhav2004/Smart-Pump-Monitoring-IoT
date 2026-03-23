@@ -497,6 +497,101 @@ function getThreshold(){
   return raw;
 }
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getDailyFeatureVector(log) {
+  const maxTemp = Number.isFinite(log.maxTemp) ? log.maxTemp : 35;
+  const minTemp = Number.isFinite(log.minTemp) ? log.minTemp : maxTemp;
+  const runHours = (log.totalTime || 0) / 60;
+  const faultCount = Array.isArray(log.faults) ? log.faults.length : 0;
+  const tempSwing = Math.max(0, maxTemp - minTemp);
+
+  // Normalized features for stable gradient descent training.
+  return [
+    runHours / 12,
+    maxTemp / 100,
+    faultCount / 6,
+    tempSwing / 50
+  ];
+}
+
+function heuristicLifeLabel(log) {
+  const maxTemp = Number.isFinite(log.maxTemp) ? log.maxTemp : 35;
+  const runHours = (log.totalTime || 0) / 60;
+  const faultCount = Array.isArray(log.faults) ? log.faults.length : 0;
+
+  // Heuristic target used as supervision when no external labeled data exists.
+  let wear = 0;
+  wear += runHours * 2.2;
+  wear += Math.max(0, maxTemp - 45) * 1.1;
+  wear += faultCount * 14;
+
+  return clamp(100 - wear, 5, 100); // Estimated life remaining %
+}
+
+function trainLifeModelFromLogs(logsObject) {
+  const entries = Object.values(logsObject || {});
+  const dataset = entries
+    .filter(log => log && (log.totalTime > 0 || (Array.isArray(log.faults) && log.faults.length > 0) || Number.isFinite(log.maxTemp)))
+    .map(log => ({
+      x: getDailyFeatureVector(log),
+      y: heuristicLifeLabel(log)
+    }));
+
+  if (dataset.length < 3) {
+    return { ok: false, reason: 'insufficient_data', samples: dataset.length };
+  }
+
+  let w0 = 0;
+  let w1 = 0;
+  let w2 = 0;
+  let w3 = 0;
+  let b = 50;
+
+  const lr = 0.08;
+  const epochs = 1200;
+  const n = dataset.length;
+
+  for (let epoch = 0; epoch < epochs; epoch += 1) {
+    let dw0 = 0;
+    let dw1 = 0;
+    let dw2 = 0;
+    let dw3 = 0;
+    let db = 0;
+
+    for (const sample of dataset) {
+      const pred = (w0 * sample.x[0]) + (w1 * sample.x[1]) + (w2 * sample.x[2]) + (w3 * sample.x[3]) + b;
+      const error = pred - sample.y;
+      dw0 += error * sample.x[0];
+      dw1 += error * sample.x[1];
+      dw2 += error * sample.x[2];
+      dw3 += error * sample.x[3];
+      db += error;
+    }
+
+    w0 -= (lr * 2 * dw0) / n;
+    w1 -= (lr * 2 * dw1) / n;
+    w2 -= (lr * 2 * dw2) / n;
+    w3 -= (lr * 2 * dw3) / n;
+    b -= (lr * 2 * db) / n;
+  }
+
+  return {
+    ok: true,
+    samples: n,
+    weights: [w0, w1, w2, w3],
+    bias: b
+  };
+}
+
+function predictLifeWithModel(model, log) {
+  const x = getDailyFeatureVector(log);
+  const predLife = (model.weights[0] * x[0]) + (model.weights[1] * x[1]) + (model.weights[2] * x[2]) + (model.weights[3] * x[3]) + model.bias;
+  return clamp(predLife, 0, 100);
+}
+
 function predictRisk() {
   const today = new Date().toISOString().split('T')[0];
   const log = dailyLogs[today];
@@ -505,23 +600,31 @@ function predictRisk() {
     return;
   }
 
-  // Calculate risk score (0-100)
-  let riskScore = 0;
-  riskScore += log.faults.length * 10; // 10 points per fault
-  if (log.maxTemp > 50) {
-    riskScore += (log.maxTemp - 50) * 0.5; // 0.5 points per degree above 50
-  }
-  riskScore += (log.totalTime / 60) * 0.1; // 0.1 points per hour run
-  riskScore = Math.min(100, Math.max(0, riskScore)); // Cap between 0-100
+  const model = trainLifeModelFromLogs(dailyLogs);
+  const lifeRemaining = model.ok
+    ? predictLifeWithModel(model, log)
+    : heuristicLifeLabel(log);
+  const riskScore = Math.round(clamp(100 - lifeRemaining, 0, 100));
+  const lifeRounded = Math.round(lifeRemaining);
 
   let riskMessage = '';
   if (riskScore > 70) {
     riskMessage = '<span style="color: #eb5f77;">HIGH RISK - Change your motor as early as possible!</span>';
+  } else if (riskScore > 40) {
+    riskMessage = '<span style="color: #f4d03f;">MEDIUM RISK - Plan maintenance soon.</span>';
   } else {
     riskMessage = '<span style="color: #58d68d;">LOW RISK - Your motor is fine.</span>';
   }
 
-  document.getElementById("riskResult").innerHTML = `Risk Score: ${Math.round(riskScore)}/100 - ${riskMessage}`;
+  const modelInfo = model.ok
+    ? `<span style="color: #a8b4cd;">AI model trained on ${model.samples} day(s) of history.</span>`
+    : '<span style="color: #a8b4cd;">Not enough history for full training yet (need at least 3 days). Showing baseline AI estimate.</span>';
+
+  document.getElementById("riskResult").innerHTML = `
+    <div>Risk Score: <strong>${riskScore}/100</strong> - ${riskMessage}</div>
+    <div style="margin-top: 6px; color: #5fe0ff;">Estimated Motor Life Remaining: <strong>${lifeRounded}%</strong></div>
+    <div style="margin-top: 6px; font-size: 0.92rem;">${modelInfo}</div>
+  `;
 }
 
 function showReport() {
